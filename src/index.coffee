@@ -4,11 +4,11 @@ crypto = require "crypto"
 _ = require "underscore"
 
 # Begin the happy thing!
-# How we do it: 
-# We cache the original mongoose.Query.prototype.execFind function, 
-# and replace it with this version that utilizes Redis caching. 
-# 
-# For more information, get on to the readme.md! 
+# How we do it:
+# We cache the original mongoose.Query.prototype.execFind function,
+# and replace it with this version that utilizes Redis caching.
+#
+# For more information, get on to the readme.md!
 
 
 # We need RegExp::toJSON to serialize queries with reqular expressions
@@ -36,22 +36,22 @@ mongooseRedisCache = (mongoose, options, callback) ->
   mongoose.redisClient = client = redis.createClient port, host, redisOptions
 
   if pass.length > 0
-    client.auth pass, (err) -> 
+    client.auth pass, (err) ->
       if callback then return callback err
 
-  # Cache original execFind function so that 
+  # Cache original execFind function so that
   # we can use it later
   mongoose.Query::_execFind = mongoose.Query::execFind
 
   # Replace original function with this version that utilizes
-  # Redis caching when executing finds. 
-  # Note: We only use this version of execution if it's a lean call, 
-  # meaning we don't cast each object to the Mongoose schema objects! 
-  # Also this will only enabled if user had specified cache: true option 
-  # when creating the Mongoose Schema object! 
+  # Redis caching when executing finds.
+  # Note: We only use this version of execution if it's a lean call,
+  # meaning we don't cast each object to the Mongoose schema objects!
+  # Also this will only enabled if user had specified cache: true option
+  # when creating the Mongoose Schema object!
 
   mongoose.Query::execFind = (callback) ->
-    self = this    
+    self = this
     model = @model
     query = @_conditions || {}
     options = @_optionsForExec(model) || {}
@@ -82,7 +82,7 @@ mongooseRedisCache = (mongoose, options, callback) ->
       if err then return callback err
 
       if not result
-        # If the key is not found in Redis, executes Mongoose original 
+        # If the key is not found in Redis, executes Mongoose original
         # execFind() function and then cache the results in Redis
 
         for k, path of populate
@@ -95,15 +95,15 @@ mongooseRedisCache = (mongoose, options, callback) ->
           client.setex key, expires, str
           callback null, docs
       else
-        # Key is found, yay! Return the baby! 
+        # Key is found, yay! Return the baby!
         docs = JSON.parse(result)
         return callback null, docs
-      
+
     client.get key, cb
 
     return @
 
   return
 
-# Just some exports, hah. 
+# Just some exports, hah.
 module.exports = mongooseRedisCache
