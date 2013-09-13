@@ -58,11 +58,18 @@ mongooseRedisCache = function(mongoose, options, callback) {
     hash = crypto.createHash('md5').update(JSON.stringify(query)).update(JSON.stringify(options)).update(JSON.stringify(fields)).update(JSON.stringify(populate)).digest('hex');
     key = [prefix, collectionName, hash].join(':');
     cb = function(err, result) {
-      var docs;
+      var docs, k, path;
       if (err) {
         return callback(err);
       }
       if (!result) {
+        for (k in populate) {
+          path = populate[k];
+          path.options || (path.options = {});
+          _.defaults(path.options, {
+            nocache: true
+          });
+        }
         return mongoose.Query.prototype._execFind.call(self, function(err, docs) {
           var str;
           if (err) {
