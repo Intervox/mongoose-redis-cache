@@ -51,14 +51,14 @@ mongooseRedisCache = function(mongoose, options, callback) {
     schemaOptions = model.schema.options;
     collectionName = model.collection.name;
     expires = schemaOptions.expires || 60;
-    if (!(schemaOptions.redisCache && !options.nocache && options.lean)) {
+    if (!(schemaOptions.redisCache && !options.nocache)) {
       return mongoose.Query.prototype._execFind.apply(self, arguments);
     }
     delete options.nocache;
     hash = crypto.createHash('md5').update(JSON.stringify(query)).update(JSON.stringify(options)).update(JSON.stringify(fields)).update(JSON.stringify(populate)).digest('hex');
     key = [prefix, collectionName, hash].join(':');
     cb = function(err, result) {
-      var docs, k, path;
+      var doc, docs, k, path, _i, _len;
       if (err) {
         return callback(err);
       }
@@ -81,6 +81,12 @@ mongooseRedisCache = function(mongoose, options, callback) {
         });
       } else {
         docs = JSON.parse(result);
+        if (options.lean) {
+          for (_i = 0, _len = docs.length; _i < _len; _i++) {
+            doc = docs[_i];
+            new model(doc);
+          }
+        }
         return callback(null, docs);
       }
     };
