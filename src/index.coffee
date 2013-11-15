@@ -10,7 +10,6 @@ _ = require "underscore"
 #
 # For more information, get on to the readme.md!
 
-
 # We need RegExp::toJSON to serialize queries with reqular expressions
 
 RegExp::toJSON = ->
@@ -45,8 +44,7 @@ mongooseRedisCache = (mongoose, options, callback) ->
 
   # Replace original function with this version that utilizes
   # Redis caching when executing finds.
-  # Note: We only use this version of execution if it's a lean call,
-  # meaning we don't cast each object to the Mongoose schema objects!
+  # Note: if not specified lean options - than we cast each object to the Mongoose schema! If use lean than no!
   # Also this will only enabled if user had specified cache: true option
   # when creating the Mongoose Schema object!
 
@@ -64,7 +62,7 @@ mongooseRedisCache = (mongoose, options, callback) ->
 
     # We only use redis cache of user specified to use cache on the schema,
     # and it will only execute if the call is a lean call.
-    unless schemaOptions.redisCache and not options.nocache and options.lean
+    unless schemaOptions.redisCache and not options.nocache
       return mongoose.Query::_execFind.apply self, arguments
 
     delete options.nocache
@@ -97,6 +95,8 @@ mongooseRedisCache = (mongoose, options, callback) ->
       else
         # Key is found, yay! Return the baby!
         docs = JSON.parse(result)
+        if !options.lean
+          new model doc for doc in docs
         return callback null, docs
 
     client.get key, cb
