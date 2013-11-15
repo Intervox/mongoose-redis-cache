@@ -81,7 +81,7 @@ mongooseRedisCache = function(mongoose, options, callback) {
         });
       } else {
         docs = JSON.parse(result);
-        if (options.lean) {
+        if (!options.lean) {
           for (_i = 0, _len = docs.length; _i < _len; _i++) {
             doc = docs[_i];
             new model(doc);

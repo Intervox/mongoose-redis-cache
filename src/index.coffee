@@ -95,7 +95,7 @@ mongooseRedisCache = (mongoose, options, callback) ->
       else
         # Key is found, yay! Return the baby!
         docs = JSON.parse(result)
-        if options.lean
+        if !options.lean
           new model doc for doc in docs
         return callback null, docs
 
